@@ -77,6 +77,7 @@
     <Compile Include="Protections\Mutations\Basic\StringToDouble.cs" />
     <Compile Include="Protections\Mutations\Branches\IFInliner.cs" />
     <Compile Include="Protections\Mutations\De4Dot\De4DotCleaner.cs" />
+    <Compile Include="Protections\Mutations\Fields\FieldProxy.cs" />
     <Compile Include="Protections\Mutations\Fields\FieldsAssignedAtStart.cs" />
     <Compile Include="Protections\Mutations\Fields\NativeIntDecryption.cs" />
     <Compile Include="Protections\Mutations\Locals\NullLocals.cs" />

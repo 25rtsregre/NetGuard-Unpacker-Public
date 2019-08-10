@@ -21,6 +21,7 @@ namespace NetGuard_Deobfuscator_2.Protections.Mutations
           new Mutations.Branches.IFInliner(),
           new Mutations.Opaques.Public.PatternOpaqueCleaner(),
           new Mutations.De4Dot.De4DotCleaner(),
+          new Mutations.Fields.FieldProxy(),
         };
         public override void Deobfuscate()
         {
