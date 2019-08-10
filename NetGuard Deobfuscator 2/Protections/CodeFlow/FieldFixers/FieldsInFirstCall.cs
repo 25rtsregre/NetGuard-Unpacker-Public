@@ -20,7 +20,7 @@ namespace NetGuard_Deobfuscator_2.Protections.CodeFlow.FieldFixers
 
         public static void Remove()
         {
-            TamperFields(ModuleDefMD);
+      //      TamperFields(ModuleDefMD);
             if (allFields == null) TamperFields2(ModuleDefMD);
 
             //Console.WriteLine("[!] Fields Deteted!");

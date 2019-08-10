@@ -152,7 +152,7 @@ namespace NetGuard_Deobfuscator_2.Protections.AntiTamper
             initialKeys = new uint[4];
             cctor = module.GlobalType.FindStaticConstructor();
             if (cctor.Body.Instructions[0].OpCode == OpCodes.Call &&
-                cctor.Body.Instructions[0].Operand.ToString().Contains("VM"))
+                cctor.Body.Instructions[0].Operand.ToString().Contains("KoiVM"))
             {
                 cctor = (MethodDef)cctor.Body.Instructions[0].Operand;
             }
@@ -181,6 +181,11 @@ namespace NetGuard_Deobfuscator_2.Protections.AntiTamper
             {
                 //			Console.WriteLine("[!!] Third Initial Key Scraper Failed");
                 FindInitialKeys4(antitamp);
+            }
+            if (initialKeys.Any(initialKey => initialKey == 0))
+            {
+                //			Console.WriteLine("[!!] Third Initial Key Scraper Failed");
+                FindInitialKeys5(antitamp);
             }
             if (initialKeys[1] == 0)
             {
@@ -622,6 +627,45 @@ namespace NetGuard_Deobfuscator_2.Protections.AntiTamper
                 if (antitamp.Body.Instructions[i + 1].Operand.ToString().Contains("V_18"))
                 {
                     initialKeys[3] = (uint)(int)item.Operand;
+                }
+            }
+        }
+        private static void FindInitialKeys5(MethodDef antitamp)
+        {
+            int count = antitamp.Body.Instructions.Count;
+            int num2 = count - 0x125;
+            for (int i = 0; i < count; i++)
+            {
+                Instruction item = antitamp.Body.Instructions[i];
+                if (!item.OpCode.Equals(OpCodes.Call))
+                {
+                    continue;
+                }
+                if ((item.Operand as IMethod).MethodSig.Params.Count != 1) continue;
+                if (!antitamp.Body.Instructions[i - 1].IsLdcI4()) continue;
+                if (!antitamp.Body.Instructions[i + 1].OpCode.Equals(OpCodes.Stloc_S))
+                {
+                    continue;
+                }
+
+                if (antitamp.Body.Instructions[i + 1].Operand.ToString().Contains("V_10"))
+                {
+                    initialKeys[0] = (uint)((int)antitamp.Body.Instructions[i - 1].GetLdcI4Value()) - 97482487;
+                }
+
+                if (antitamp.Body.Instructions[i + 1].Operand.ToString().Contains("V_11"))
+                {
+                    initialKeys[1] = (uint)((int)antitamp.Body.Instructions[i - 1].GetLdcI4Value()) - 97482487;
+                }
+
+                if (antitamp.Body.Instructions[i + 1].Operand.ToString().Contains("V_12"))
+                {
+                    initialKeys[2] = (uint)((int)antitamp.Body.Instructions[i - 1].GetLdcI4Value()) - 97482487;
+                }
+
+                if (antitamp.Body.Instructions[i + 1].Operand.ToString().Contains("V_13"))
+                {
+                    initialKeys[3] = (uint)((int)antitamp.Body.Instructions[i - 1].GetLdcI4Value()) - 97482487;
                 }
             }
         }

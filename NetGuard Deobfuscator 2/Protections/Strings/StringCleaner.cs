@@ -25,7 +25,8 @@ namespace NetGuard_Deobfuscator_2.Protections.Strings
             if (!Protections.Base.NativePacker)
             {
                 Console.WriteLine("Current string protection on this file is not supported im currently working on a fix but not many files have this protection");
-            //    return;
+                //    return;
+                Console.WriteLine("Make sure to copy the files from Unicorn Folder to the debug folder");
             }
             StringBase.ModuleDefMD = ModuleDefMD;
             foreach(StringBase @base in stringModules)

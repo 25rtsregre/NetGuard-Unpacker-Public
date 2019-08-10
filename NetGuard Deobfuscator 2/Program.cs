@@ -25,13 +25,17 @@ namespace NetGuard_Deobfuscator_2
         };
         static void Main(string[] args)
         {
-            Path = Console.ReadLine();
+            Console.WriteLine("Enter path");
+            Path = Console.ReadLine().Replace('"',' ');
+            Console.WriteLine("Unpacking");
             LoadModule(Path);
             foreach (Protections.Base @Base in modules)
             {
                 Base.Deobfuscate();
             }
+            Console.WriteLine("Saving");
             SaveModule();
+            Console.WriteLine("Done");
         }
         public static MemoryStream Unpack(string path)
         {

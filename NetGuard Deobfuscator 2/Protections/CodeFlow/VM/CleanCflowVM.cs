@@ -85,33 +85,69 @@ namespace NetGuard_Deobfuscator_2.Protections.CodeFlow.VM
                                             {
                                                 if (methods3.Body.Instructions[z].OpCode == OpCodes.Ldstr && methods3.Body.Instructions[z - 1].OpCode == OpCodes.Ldstr && methods3.Body.Instructions[z - 2].OpCode == OpCodes.Ldstr)
                                                 {
+
                                                     var str = methods3.Body.Instructions[z - 2].Operand.ToString();
                                                     var key = methods3.Body.Instructions[z - 1].Operand.ToString();
                                                     var iv = methods3.Body.Instructions[z].Operand.ToString();
-                                                    using (RijndaelManaged rijAlg = new RijndaelManaged())
+                                                    if (IsBase64Key(key) && IsBase64IV(iv))
                                                     {
-                                                        rijAlg.Key = (Convert.FromBase64String(key));
-                                                        rijAlg.IV = Convert.FromBase64String(iv);
-
-                                                        // Create a decryptor to perform the stream transform.
-                                                        ICryptoTransform decryptor = rijAlg.CreateDecryptor(rijAlg.Key, rijAlg.IV);
-
-                                                        // Create the streams used for decryption.
-                                                        var str2 = Convert.FromBase64String(str);
-                                                        using (MemoryStream msDecrypt = new MemoryStream((str2)))
+                                                        using (RijndaelManaged rijAlg = new RijndaelManaged())
                                                         {
-                                                            using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                                                            rijAlg.Key = (Convert.FromBase64String(key));
+                                                            rijAlg.IV = Convert.FromBase64String(iv);
+
+                                                            // Create a decryptor to perform the stream transform.
+                                                            ICryptoTransform decryptor = rijAlg.CreateDecryptor(rijAlg.Key, rijAlg.IV);
+
+                                                            // Create the streams used for decryption.
+                                                            var str2 = Convert.FromBase64String(str);
+                                                            using (MemoryStream msDecrypt = new MemoryStream((str2)))
                                                             {
-                                                                using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                                                                using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
                                                                 {
-                                                                    // Read the decrypted bytes from the decrypting stream
-                                                                    // and place them in a string.
-                                                                    var plaintext = srDecrypt.ReadToEnd();
-                                                                    resources = ((EmbeddedResource)ModuleDefMD.Resources.Find(plaintext))?.CreateReader().AsStream();
+                                                                    using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                                                                    {
+                                                                        // Read the decrypted bytes from the decrypting stream
+                                                                        // and place them in a string.
+                                                                        var plaintext = srDecrypt.ReadToEnd();
+                                                                        resources = ((EmbeddedResource)ModuleDefMD.Resources.Find(plaintext))?.CreateReader().AsStream();
+                                                                    }
                                                                 }
                                                             }
-                                                        }
 
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        var Dkey = "WquhBrzBuPv$G@gG07K#5#4S&*oHg#";
+                                                        var strDec= Decrypt(str, Dkey);
+                                                        var ivDec = Decrypt(iv, Dkey);
+                                                        var keyDec = Decrypt(key, Dkey);
+                                                        using (RijndaelManaged rijAlg = new RijndaelManaged())
+                                                        {
+                                                            rijAlg.Key = (Convert.FromBase64String(keyDec));
+                                                            rijAlg.IV = Convert.FromBase64String(ivDec);
+
+                                                            // Create a decryptor to perform the stream transform.
+                                                            ICryptoTransform decryptor = rijAlg.CreateDecryptor(rijAlg.Key, rijAlg.IV);
+
+                                                            // Create the streams used for decryption.
+                                                            var str2 = Convert.FromBase64String(strDec);
+                                                            using (MemoryStream msDecrypt = new MemoryStream((str2)))
+                                                            {
+                                                                using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                                                                {
+                                                                    using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                                                                    {
+                                                                        // Read the decrypted bytes from the decrypting stream
+                                                                        // and place them in a string.
+                                                                        var plaintext = srDecrypt.ReadToEnd();
+                                                                        resources = ((EmbeddedResource)ModuleDefMD.Resources.Find(plaintext))?.CreateReader().AsStream();
+                                                                    }
+                                                                }
+                                                            }
+
+                                                        }
                                                     }
 
 
@@ -135,6 +171,67 @@ namespace NetGuard_Deobfuscator_2.Protections.CodeFlow.VM
                     }
                 }
             }
+        }
+        public static string Decrypt(string one, string two)
+        {
+            byte[] array = Convert.FromBase64String(one);
+            byte[] key;
+            using (HashAlgorithm hashAlgorithm = new MD5CryptoServiceProvider())
+            {
+                key = hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(two));
+                hashAlgorithm.Clear();
+            }
+            SymmetricAlgorithm symmetricAlgorithm = new TripleDESCryptoServiceProvider
+            {
+                Key = key,
+                Mode = CipherMode.ECB,
+                Padding = PaddingMode.PKCS7
+            };
+            byte[] bytes = symmetricAlgorithm.CreateDecryptor().TransformFinalBlock(array, 0, array.Length);
+            symmetricAlgorithm.Clear();
+            return Encoding.UTF8.GetString(bytes);
+        }
+        public static bool IsBase64Key(string base64String)
+        {
+            // Credit: oybek https://stackoverflow.com/users/794764/oybek
+            if (string.IsNullOrEmpty(base64String) || base64String.Length % 4 != 0
+               || base64String.Contains(" ") || base64String.Contains("\t") || base64String.Contains("\r") || base64String.Contains("\n"))
+                return false;
+
+            try
+            {
+                using (RijndaelManaged rijAlg = new RijndaelManaged())
+                {
+                    rijAlg.Key = (Convert.FromBase64String(base64String));
+                }
+                    return true;
+            }
+            catch (Exception exception)
+            {
+                // Handle the exception
+            }
+            return false;
+        }
+        public static bool IsBase64IV(string base64String)
+        {
+            // Credit: oybek https://stackoverflow.com/users/794764/oybek
+            if (string.IsNullOrEmpty(base64String) || base64String.Length % 4 != 0
+               || base64String.Contains(" ") || base64String.Contains("\t") || base64String.Contains("\r") || base64String.Contains("\n"))
+                return false;
+
+            try
+            {
+                using (RijndaelManaged rijAlg = new RijndaelManaged())
+                {
+                    rijAlg.IV = (Convert.FromBase64String(base64String));
+                }
+                return true;
+            }
+            catch (Exception exception)
+            {
+                // Handle the exception
+            }
+            return false;
         }
     }
 }
